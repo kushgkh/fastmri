@@ -157,18 +157,19 @@ def train_network_2chan(network, noise, y, epochs, iterations, ground_truth, los
             plt.show()
             get_subsampled_normalized_2chan2( output[0] , mask , True)
 
-    np.save("./run_data/" + exp_name , output)
+   
     fig = plt.figure()
     plt.title('Iteration '+ str((i+1)*fit_params['epochs']))
     plt.imshow(-np.sqrt(output[0][:, :, 0] ** 2 + output[0][:, :, 1] ** 2), cmap='gray')
     fig.savefig("./run_data/" + exp_name + str(current_milli_time()) +  ".png")
+    np.save("./run_data/" + exp_name  + str(current_milli_time()), all_losses)
     plt.show()
                     
     return results, all_losses, fit_params['x']
 
-# mask_files = glob("./masks/gen_masks/{}_1*".format(4))
-# mask_files = [np.fft.fftshift(np.load(m)) for m in mask_files]
-# mask = mask_files[0]
+mask_files = glob("./masks/gen_masks/{}_1*".format(4))
+mask_files = [np.fft.fftshift(np.load(m)) for m in mask_files]
+mask = mask_files[0]
 
 
 # mask = np.load("./masks/ffast/ffast_mask_4x.npy")
@@ -187,9 +188,9 @@ def train_network_2chan(network, noise, y, epochs, iterations, ground_truth, los
 # mask = mask.T
 # mask = np.fft.fftshift(mask)
 
-mask = np.ones([320 , 256])
+#mask = np.ones([320 , 256])
 
-# mask = np.load("./masks/ffast/ffast_mask_4x.npy")
+#mask = np.load("./masks/ffast/ffast_mask_4x.npy")
 
 # mask = mask[:304 , :304]
 
@@ -271,12 +272,22 @@ for i in range(trials):
     
     autoencoder = define_network_4_2chan(verbose=False)
     
-    autoencoder.compile(Adam(1e-4), loss = recon_loss_L1_2chan_fixed3)
-    results, losses, new_noise = train_network_2chan(autoencoder, noise, normalized_img_sub, epochs, iters, normalized_img, [L1_loss, L2_loss], jitter_schedule=jit_sched, plot=False, batch_size=batch_size , exp_name = "No_mask_70_10")
+    autoencoder.compile(Adam(5e-4), loss = recon_loss_L1_2chan_fixed3)
+    results, losses, new_noise = train_network_2chan(autoencoder, noise, normalized_img_sub, epochs, iters, normalized_img, [L1_loss, L2_loss], jitter_schedule=jit_sched, plot=False, batch_size=batch_size , exp_name = "4xMask_noise")
     all_results.append(losses)
 
     del autoencoder
     gc.collect()
+
+    autoencoder = define_network_4_2chan(verbose=False)
+    
+    autoencoder.compile(Adam(5e-4), loss = recon_loss_L1_2chan_fixed3)
+    results, losses, new_noise = train_network_2chan(autoencoder, normalized_img_sub, normalized_img_sub, epochs, iters, normalized_img, [L1_loss, L2_loss], jitter_schedule=jit_sched, plot=False, batch_size=batch_size , exp_name = "4xMask_self")
+    all_results.append(losses)
+
+    del autoencoder
+    gc.collect()
+
 
 #     print("start 2")
 #     noise = np.array([noisy for _ in range(batch_size)])
