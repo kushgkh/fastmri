@@ -232,7 +232,7 @@ all_results = [] # same image, diff image, 2 diff, 4 diff
 for i in range(trials):
     
     epochs = 70
-    iters = 50
+    iters = 120
  
     batch_size = 1
     print('start 1')
@@ -272,7 +272,7 @@ for i in range(trials):
     autoencoder = define_network_4_2chan(verbose=False)
     
     autoencoder.compile(Adam(1e-2), loss = recon_loss_L1_2chan_fixed3)
-    results, losses, new_noise = train_network_2chan(autoencoder, normalized_img_sub, normalized_img_sub, epochs, iters, normalized_img, [L1_loss, L2_loss], jitter_schedule=jit_sched, plot=False, batch_size=batch_size , exp_name = "No_mask_70_10")
+    results, losses, new_noise = train_network_2chan(autoencoder, noise, normalized_img_sub, epochs, iters, normalized_img, [L1_loss, L2_loss], jitter_schedule=jit_sched, plot=False, batch_size=batch_size , exp_name = "No_mask_70_10")
     all_results.append(losses)
 
     del autoencoder
