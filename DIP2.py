@@ -16,7 +16,6 @@ from tensorflow.keras.layers import Input
 from tensorflow.keras.layers import *
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.optimizers import SGD
-from utils import *
 from deep_prior_networks import *
 import tensorflow.keras.backend as K
 from glob import glob
@@ -24,8 +23,20 @@ import sigpy as sp
 import sigpy.mri as mr
 import ipdb
 import cv2
+import time
+import ra
+import os
+current_milli_time = lambda: int(round(time.time() * 1000))
 
-
+def get_image_old2(image_path):
+  '''image = imread(image_path)
+  a = (np.array(image) - 0.5) / 0.5 # *2 - 1
+  return np.reshape(a, (320, 256, 1))'''
+  img = (ra.read_ra(os.path.join(image_path))).T
+  test = np.zeros((320, 256, 2))
+  test[:, :, 0] = np.real(img) #(np.real(img) - 0.5) / 0.5
+  test[:, :, 1] = np.imag(img) #(np.imag(img) - 0.5) / 0.5 #
+  return test
 
 
 
@@ -130,6 +141,7 @@ def train_network_2chan(network, noise, y, epochs, iterations, ground_truth, los
 
     noise_size = y.shape
     for i in range(iterations):
+        print("Iteraton " , i)
         fit_params['x'] += jitter_schedule[i] * (np.random.random(size = noise_size) * 2 - 1) #(1, ) + np.shape(noise)
         network.fit(**fit_params)
         output = network.predict(base_image)
@@ -145,12 +157,12 @@ def train_network_2chan(network, noise, y, epochs, iterations, ground_truth, los
             plt.show()
             get_subsampled_normalized_2chan2( output[0] , mask , True)
 
-        np.save("./run_data/" + exp_name , output)
-        fig = plt.figure()
-        plt.title('Iteration '+ str((i+1)*fit_params['epochs']))
-        plt.imshow(-np.sqrt(output[0][:, :, 0] ** 2 + output[0][:, :, 1] ** 2), cmap='gray')
-        fig.savefig("./run_data/" + exp_name + ".png")
-        plt.show()
+    np.save("./run_data/" + exp_name , output)
+    fig = plt.figure()
+    plt.title('Iteration '+ str((i+1)*fit_params['epochs']))
+    plt.imshow(-np.sqrt(output[0][:, :, 0] ** 2 + output[0][:, :, 1] ** 2), cmap='gray')
+    fig.savefig("./run_data/" + exp_name + str(current_milli_time()) +  ".png")
+    plt.show()
                     
     return results, all_losses, fit_params['x']
 
@@ -219,8 +231,8 @@ trials = 1
 all_results = [] # same image, diff image, 2 diff, 4 diff
 for i in range(trials):
     
-    epochs = 10
-    iters = 10
+    epochs = 70
+    iters = 50
  
     batch_size = 1
     print('start 1')
@@ -259,7 +271,7 @@ for i in range(trials):
     
     autoencoder = define_network_4_2chan(verbose=False)
     
-    autoencoder.compile(Adam(1e-3), loss = recon_loss_L1_2chan_fixed3)
+    autoencoder.compile(Adam(1e-2), loss = recon_loss_L1_2chan_fixed3)
     results, losses, new_noise = train_network_2chan(autoencoder, normalized_img_sub, normalized_img_sub, epochs, iters, normalized_img, [L1_loss, L2_loss], jitter_schedule=jit_sched, plot=False, batch_size=batch_size , exp_name = "No_mask_70_10")
     all_results.append(losses)
 
