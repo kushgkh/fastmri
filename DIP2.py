@@ -233,7 +233,7 @@ all_results = [] # same image, diff image, 2 diff, 4 diff
 for i in range(trials):
     
     epochs = 70
-    iters = 50
+    iters = 100
  
     batch_size = 1
     print('start 1')
